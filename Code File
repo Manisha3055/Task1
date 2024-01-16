@@ -1,0 +1,76 @@
+function calculateDiscount(cart, discounts) {
+    const totalQuantity = Object.values(cart).reduce((acc, curr) => acc + curr, 0);
+    const totalAmount = Object.keys(cart).reduce((acc, product) => acc + cart[product] * prices[product], 0);
+    let discountAmount = 0;
+    let discountName = "No discount";
+
+    for (const [rule, value] of Object.entries(discounts)) {
+        if (rule === "flat_10_discount" && totalAmount > 200) {
+            discountAmount = Math.min(discountAmount + value, 10);
+            discountName = "Flat $10 discount";
+        } else if (rule === "bulk_5_discount") {
+            for (const [product, quantity] of Object.entries(cart)) {
+                if (quantity > 10) {
+                    discountAmount = Math.min(discountAmount + value * prices[product], totalAmount * 0.05);
+                    discountName = `5% discount on ${product}`;
+                }
+            }
+        } else if (rule === "bulk_10_discount" && totalQuantity > 20) {
+            discountAmount = Math.min(discountAmount + value, totalAmount * 0.1);
+            discountName = "10% discount on total";
+        } else if (rule === "tiered_50_discount" && totalQuantity > 30) {
+            for (const [product, quantity] of Object.entries(cart)) {
+                if (quantity > 15) {
+                    discountAmount = Math.min(discountAmount + value * prices[product], totalAmount * 0.5);
+                    discountName = `50% discount on ${product}`;
+                }
+            }
+        }
+    }
+
+    return { discountName, discountAmount };
+}
+
+function calculateShippingAndGiftWrap(cart) {
+    const totalQuantity = Object.values(cart).reduce((acc, curr) => acc + curr, 0);
+    const shippingFee = Math.floor(totalQuantity / 10) * 5;
+    const giftWrapFee = Object.values(cart).reduce((acc, curr) => acc + curr, 0);
+
+    return { shippingFee, giftWrapFee };
+}
+
+const prices = { "Product A": 20, "Product B": 40, "Product C": 50 };
+const discountRules = {
+    "flat_10_discount": 10,
+    "bulk_5_discount": 0.05,
+    "bulk_10_discount": 0.1,
+    "tiered_50_discount": 0.5
+};
+
+const cart = {};
+for (const product in prices) {
+    const quantity = parseInt(prompt(`Enter quantity for ${product}: `), 10);
+    cart[product] = quantity > 0 ? quantity : 0;
+
+    const giftWrap = prompt(`Is ${product} wrapped as a gift? (yes/no): `);
+    if (giftWrap.toLowerCase() === "yes") {
+        cart[product] += quantity;
+    }
+}
+
+const subtotal = Object.keys(cart).reduce((acc, product) => acc + cart[product] * prices[product], 0);
+const { discountName, discountAmount } = calculateDiscount(cart, discountRules);
+const { shippingFee, giftWrapFee } = calculateShippingAndGiftWrap(cart);
+const total = subtotal - discountAmount + shippingFee + giftWrapFee;
+
+
+console.log("\nProduct Details:");
+for (const [product, quantity] of Object.entries(cart)) {
+    console.log(`${product}: Quantity: ${quantity}, Total: $${quantity * prices[product]}`);
+}
+
+console.log("\nSubtotal: $", subtotal);
+console.log(`Discount Applied: ${discountName}, Amount: $${discountAmount}`);
+console.log(`Shipping Fee: $${shippingFee}`);
+console.log(`Gift Wrap Fee: $${giftWrapFee}`);
+console.log("\nTotal: $", total);
